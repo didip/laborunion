@@ -6,7 +6,7 @@
 It's a worker pool library.
 
 
-## One Minute Example
+## Five Minute Tutorial
 
 ```go
 package main

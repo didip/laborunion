@@ -9,7 +9,7 @@ func Test_BasicInit(t *testing.T) {
 	p := New()
 	p.SetBatchSize(20)
 	p.ResizeInChan(1000)
-	p.SetWorker(func([]interface{}, interface{}) error {
+	p.SetWorker(func([]interface{}) error {
 		return nil
 	})
 
@@ -30,7 +30,7 @@ func Test_BasicHooks(t *testing.T) {
 	p := New()
 	p.SetBatchSize(1)
 	p.ResizeInChan(1000)
-	p.SetWorker(func([]interface{}, interface{}) error {
+	p.SetWorker(func([]interface{}) error {
 		return nil
 	})
 
@@ -70,7 +70,7 @@ func Test_BasicHooks(t *testing.T) {
 
 func Test_BasicSpawnDespawn(t *testing.T) {
 	p := New()
-	p.SetWorker(func([]interface{}, interface{}) error {
+	p.SetWorker(func([]interface{}) error {
 		return nil
 	})
 
@@ -95,7 +95,7 @@ func Test_BasicSpawnDespawn(t *testing.T) {
 
 func Test_BasicSetterGetter(t *testing.T) {
 	p := New()
-	p.SetWorker(func([]interface{}, interface{}) error {
+	p.SetWorker(func([]interface{}) error {
 		return nil
 	})
 
@@ -119,9 +119,11 @@ func Test_BasicConsumption(t *testing.T) {
 	expectedWorkDone := int64(10)
 
 	p := New()
-	p.SetWorker(func(tasks []interface{}, task interface{}) error {
+	p.SetWorker(func(tasks []interface{}) error {
 		atomic.AddInt64(&workDone, 1)
-		println(task.(int64))
+		for _, task := range tasks {
+			println(task.(int64))
+		}
 		return nil
 	})
 

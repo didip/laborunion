@@ -26,11 +26,11 @@ type WorkerPool struct {
 	beforeBatchingHook func()
 	afterBatchingHook  func([]interface{})
 	onFailedWork       func(error)
-	onSuccessWork      func(interface{})
+	onSuccessWork      func([]interface{})
 	onNewWorker        func()
 	onDeleteWorker     func()
 
-	worker      func([]interface{}, interface{}) error
+	worker      func([]interface{}) error
 	workerCount int
 
 	retries              int
@@ -115,14 +115,14 @@ func (p *WorkerPool) GetOnFailedWork() func(error) {
 }
 
 // SetOnSuccessWork sets function to be executed when worker finished successfully.
-func (p *WorkerPool) SetOnSuccessWork(f func(interface{})) {
+func (p *WorkerPool) SetOnSuccessWork(f func([]interface{})) {
 	p.mtx.Lock()
 	p.onSuccessWork = f
 	p.mtx.Unlock()
 }
 
 // GetOnSuccessWork returns function to be executed when worker finished successfully.
-func (p *WorkerPool) GetOnSuccessWork() func(interface{}) {
+func (p *WorkerPool) GetOnSuccessWork() func([]interface{}) {
 	p.mtx.RLock()
 	defer p.mtx.RUnlock()
 	return p.onSuccessWork
@@ -162,32 +162,30 @@ func (p *WorkerPool) Run() error {
 		}
 
 		// 4. Loop through every single task and executes them.
-		for _, task := range tasks {
-			var err error
+		var err error
 
-			if p.GetRetries() > 0 {
-				for i := 0; i < p.GetRetries(); i++ {
-					err = p.GetWorker()(tasks, task)
-					if err == nil {
-						break
-					}
-
-					// Sleep between retrying
-					time.Sleep(p.RetryDuration())
+		if p.GetRetries() > 0 {
+			for i := 0; i < p.GetRetries(); i++ {
+				err = p.GetWorker()(tasks)
+				if err == nil {
+					break
 				}
 
-			} else {
-				err = p.GetWorker()(tasks, task)
+				// Sleep between retrying
+				time.Sleep(p.RetryDuration())
 			}
 
-			if err != nil {
-				if p.GetOnFailedWork() != nil {
-					p.GetOnFailedWork()(err)
-				}
-			} else {
-				if p.GetOnSuccessWork() != nil {
-					p.GetOnSuccessWork()(task)
-				}
+		} else {
+			err = p.GetWorker()(tasks)
+		}
+
+		if err != nil {
+			if p.GetOnFailedWork() != nil {
+				p.GetOnFailedWork()(err)
+			}
+		} else {
+			if p.GetOnSuccessWork() != nil {
+				p.GetOnSuccessWork()(tasks)
 			}
 		}
 	}
@@ -355,14 +353,14 @@ func (p *WorkerPool) GetInChanSize() int {
 }
 
 // SetWorker sets worker (defined as function hook).
-func (p *WorkerPool) SetWorker(worker func([]interface{}, interface{}) error) {
+func (p *WorkerPool) SetWorker(worker func([]interface{}) error) {
 	p.mtx.Lock()
 	p.worker = worker
 	p.mtx.Unlock()
 }
 
 // GetWorker returns worker (defined as function hook).
-func (p *WorkerPool) GetWorker() func([]interface{}, interface{}) error {
+func (p *WorkerPool) GetWorker() func([]interface{}) error {
 	p.mtx.RLock()
 	defer p.mtx.RUnlock()
 	return p.worker

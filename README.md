@@ -3,7 +3,7 @@
 
 ## laborunion
 
-It's a worker pool library.
+It's a worker pool library. One might say it has a simple actor pattern (blocking channel + worker pool).
 
 
 ## Five Minute Tutorial
@@ -20,8 +20,10 @@ func main() {
     // 1. Configure worker pool
     pool := laborunion.New()
 
-    pool.SetWorker(func(tasks []interface{}, task interface{}) error {
-        fmt.Printf("Running a task: %v\n", task)
+    pool.SetWorker(func(tasks []interface{}) error {
+        for _, task := range tasks {
+            fmt.Printf("Running a task: %v\n", task)
+        }
         return nil
     })
 
@@ -41,8 +43,10 @@ func main() {
     ```go
     pool := laborunion.New()
 
-    pool.SetWorker(func(tasks []interface{}, task interface{}) error {
-        fmt.Printf("Running a task: %v", task)
+    pool.SetWorker(func(tasks []interface{}) error {
+        for _, task := range tasks {
+            fmt.Printf("Running a task: %v\n", task)
+        }
     })
     pool.SetWorkerCount(5)
     pool.SetWorkerCount(10)
@@ -80,6 +84,8 @@ func main() {
     pool.SetRetries(5)
     pool.SetMaxRetryMilliseconds(20)
     ```
+
+4. No external libraries used.
 
 
 ## My other Go libraries
